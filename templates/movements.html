@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Stock Log — {{ product.name }}</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, sans-serif; background: #f0f4f8; color: #1a202c; }
+  .navbar { background: #1a365d; color: #fff; padding: 0 32px; height: 60px; display: flex; align-items: center; }
+  .navbar h1 { font-size: 1.1rem; font-weight: 700; }
+  .container { max-width: 760px; margin: 32px auto; padding: 0 20px; }
+  .back { display: inline-flex; align-items: center; gap: 6px; color: #3182ce; text-decoration: none; font-size: 0.85rem; margin-bottom: 20px; font-weight: 600; }
+  .product-info { background: #fff; border-radius: 10px; padding: 20px 24px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); display: flex; gap: 32px; flex-wrap: wrap; }
+  .info-item .info-label { font-size: 0.7rem; color: #a0aec0; text-transform: uppercase; letter-spacing: 0.05em; }
+  .info-item .info-val { font-size: 1rem; font-weight: 700; margin-top: 2px; }
+  .card { background: #fff; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); overflow: hidden; }
+  .card-header { padding: 14px 20px; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; }
+  .card-title { font-weight: 700; font-size: 0.95rem; }
+  table { width: 100%; border-collapse: collapse; }
+  th { padding: 10px 16px; text-align: left; font-size: 0.72rem; color: #718096; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #e2e8f0; background: #f7fafc; }
+  td { padding: 13px 16px; border-bottom: 1px solid #f0f4f8; font-size: 0.875rem; }
+  tr:last-child td { border-bottom: none; }
+  .badge-in  { background: #c6f6d5; color: #276749; padding: 3px 10px; border-radius: 100px; font-size: 0.72rem; font-weight: 700; }
+  .badge-out { background: #fed7d7; color: #c53030; padding: 3px 10px; border-radius: 100px; font-size: 0.72rem; font-weight: 700; }
+  .empty { text-align: center; padding: 40px; color: #a0aec0; }
+</style>
+</head>
+<body>
+<div class="navbar"><h1>📦 Inventory Management System</h1></div>
+<div class="container">
+  <a href="/" class="back">← Back to Inventory</a>
+
+  <div class="product-info">
+    <div class="info-item">
+      <div class="info-label">Product</div>
+      <div class="info-val">{{ product.name }}</div>
+    </div>
+    <div class="info-item">
+      <div class="info-label">SKU</div>
+      <div class="info-val" style="font-family:monospace; color:#718096">{{ product.sku }}</div>
+    </div>
+    <div class="info-item">
+      <div class="info-label">Current Stock</div>
+      <div class="info-val" style="color:#276749">{{ product.quantity }} units</div>
+    </div>
+    <div class="info-item">
+      <div class="info-label">Category</div>
+      <div class="info-val">{{ product.category }}</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">📋 Stock Movement History</span>
+      <span style="font-size:0.8rem; color:#a0aec0">{{ logs|length }} entries</span>
+    </div>
+    {% if logs %}
+    <table>
+      <thead>
+        <tr><th>Type</th><th>Quantity</th><th>Note</th><th>Date & Time</th></tr>
+      </thead>
+      <tbody>
+        {% for log in logs %}
+        <tr>
+          <td>
+            {% if log.type == 'IN' %}
+            <span class="badge-in">▲ IN</span>
+            {% else %}
+            <span class="badge-out">▼ OUT</span>
+            {% endif %}
+          </td>
+          <td style="font-weight:700">
+            {% if log.type == 'IN' %}
+            <span style="color:#276749">+{{ log.quantity }}</span>
+            {% else %}
+            <span style="color:#c53030">-{{ log.quantity }}</span>
+            {% endif %}
+          </td>
+          <td style="color:#718096">{{ log.note or '—' }}</td>
+          <td style="color:#a0aec0; font-size:0.82rem">{{ log.created_at }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty">No stock movements recorded yet.</div>
+    {% endif %}
+  </div>
+</div>
+</body>
+</html>

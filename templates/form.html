@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>{{ action }} Product — Inventory</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, sans-serif; background: #f0f4f8; color: #1a202c; }
+  .navbar { background: #1a365d; color: #fff; padding: 0 32px; height: 60px; display: flex; align-items: center; justify-content: space-between; }
+  .navbar h1 { font-size: 1.1rem; font-weight: 700; }
+  .container { max-width: 640px; margin: 36px auto; padding: 0 20px; }
+  .back { display: inline-flex; align-items: center; gap: 6px; color: #3182ce; text-decoration: none; font-size: 0.85rem; margin-bottom: 20px; font-weight: 600; }
+  .back:hover { text-decoration: underline; }
+  .card { background: #fff; border-radius: 12px; padding: 32px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+  .card h2 { font-size: 1.1rem; font-weight: 700; margin-bottom: 24px; padding-bottom: 14px; border-bottom: 1px solid #e2e8f0; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-group { margin-bottom: 16px; }
+  label { display: block; font-size: 0.78rem; font-weight: 600; color: #4a5568; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.04em; }
+  input, select, textarea {
+    width: 100%; padding: 10px 13px; border: 1px solid #cbd5e0;
+    border-radius: 8px; font-size: 0.9rem; outline: none;
+    font-family: inherit; background: #fff;
+  }
+  input:focus, select:focus { border-color: #3182ce; box-shadow: 0 0 0 3px rgba(49,130,206,0.1); }
+  .hint { font-size: 0.72rem; color: #a0aec0; margin-top: 4px; }
+  .flash { padding: 11px 14px; border-radius: 7px; margin-bottom: 16px; font-size: 0.85rem; background: #fed7d7; color: #c53030; border: 1px solid #feb2b2; }
+  .form-actions { display: flex; gap: 10px; margin-top: 24px; padding-top: 20px; border-top: 1px solid #e2e8f0; }
+  .btn { padding: 10px 22px; border-radius: 8px; border: none; cursor: pointer; font-size: 0.875rem; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+  .btn-primary { background: #3182ce; color: #fff; }
+  .btn-primary:hover { background: #2b6cb0; }
+  .btn-gray { background: #edf2f7; color: #4a5568; }
+  .btn-gray:hover { background: #e2e8f0; }
+  .section-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: #a0aec0; font-weight: 700; margin: 20px 0 12px; }
+</style>
+</head>
+<body>
+<div class="navbar"><h1>📦 Inventory Management System</h1></div>
+<div class="container">
+  <a href="/" class="back">← Back to Inventory</a>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+    <div class="flash">⚠ {{ msg }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  <div class="card">
+    <h2>{{ '➕ Add New Product' if action == 'Add' else '✏️ Edit Product' }}</h2>
+
+    <form method="POST">
+
+      <div class="section-label">Basic Info</div>
+      <div class="form-group">
+        <label>Product Name *</label>
+        <input type="text" name="name" required placeholder="e.g. Wireless Keyboard"
+               value="{{ product.name if product else '' }}"/>
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label>SKU *</label>
+          <input type="text" name="sku" required placeholder="e.g. WK-001"
+                 value="{{ product.sku if product else '' }}"/>
+          <div class="hint">Unique product code (auto-uppercased)</div>
+        </div>
+        <div class="form-group">
+          <label>Category *</label>
+          <input type="text" name="category" required placeholder="e.g. Electronics"
+                 list="cat-list" value="{{ product.category if product else '' }}"/>
+          <datalist id="cat-list">
+            <option value="Electronics"/>
+            <option value="Furniture"/>
+            <option value="Stationery"/>
+            <option value="Clothing"/>
+            <option value="Food & Beverage"/>
+            <option value="Tools"/>
+            <option value="Other"/>
+          </datalist>
+        </div>
+      </div>
+
+      <div class="section-label">Stock & Pricing</div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Quantity</label>
+          <input type="number" name="quantity" min="0" placeholder="0"
+                 value="{{ product.quantity if product else '0' }}"/>
+        </div>
+        <div class="form-group">
+          <label>Unit Price (₹)</label>
+          <input type="number" name="unit_price" min="0" step="0.01" placeholder="0.00"
+                 value="{{ product.unit_price if product else '0.00' }}"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Low Stock Alert Threshold</label>
+        <input type="number" name="low_stock_threshold" min="0" placeholder="10"
+               value="{{ product.low_stock_threshold if product else '10' }}"/>
+        <div class="hint">Alert shown when quantity falls at or below this number</div>
+      </div>
+
+      <div class="section-label">Supplier & Location</div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Supplier</label>
+          <input type="text" name="supplier" placeholder="e.g. TechSupply Co"
+                 value="{{ product.supplier if product else '' }}"/>
+        </div>
+        <div class="form-group">
+          <label>Storage Location</label>
+          <input type="text" name="location" placeholder="e.g. Aisle A1"
+                 value="{{ product.location if product else '' }}"/>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">
+          {{ '➕ Add Product' if action == 'Add' else '💾 Save Changes' }}
+        </button>
+        <a href="/" class="btn btn-gray">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Inventory Management System</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, sans-serif; background: #f0f4f8; color: #1a202c; }
+
+  .navbar {
+    background: #1a365d; color: #fff;
+    padding: 0 32px; height: 60px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .navbar h1 { font-size: 1.1rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .navbar-right { font-size: 0.8rem; opacity: 0.7; }
+
+  .container { max-width: 1200px; margin: 28px auto; padding: 0 20px; }
+
+  /* Flash messages */
+  .flash { padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 0.875rem; display: flex; align-items: center; gap: 8px; }
+  .flash.success { background: #c6f6d5; color: #276749; border: 1px solid #9ae6b4; }
+  .flash.error   { background: #fed7d7; color: #c53030; border: 1px solid #feb2b2; }
+
+  /* Stats */
+  .stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 24px; }
+  .stat-card {
+    background: #fff; border-radius: 10px; padding: 18px 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    border-left: 4px solid;
+  }
+  .stat-card.blue   { border-color: #3182ce; }
+  .stat-card.green  { border-color: #38a169; }
+  .stat-card.orange { border-color: #dd6b20; }
+  .stat-card.red    { border-color: #e53e3e; }
+  .stat-num   { font-size: 1.7rem; font-weight: 700; }
+  .blue .stat-num   { color: #3182ce; }
+  .green .stat-num  { color: #38a169; }
+  .orange .stat-num { color: #dd6b20; }
+  .red .stat-num    { color: #e53e3e; }
+  .stat-label { font-size: 0.75rem; color: #718096; margin-top: 3px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+  /* Toolbar */
+  .toolbar {
+    display: flex; gap: 10px; flex-wrap: wrap;
+    align-items: center; margin-bottom: 16px;
+  }
+  .toolbar form { display: flex; gap: 8px; flex: 1; flex-wrap: wrap; }
+  input[type="text"], select {
+    padding: 9px 13px; border: 1px solid #cbd5e0; border-radius: 7px;
+    font-size: 0.875rem; outline: none; background: #fff;
+  }
+  input[type="text"]:focus, select:focus { border-color: #3182ce; }
+  .search-input { flex: 1; min-width: 180px; }
+
+  /* Buttons */
+  .btn {
+    padding: 9px 18px; border-radius: 7px; border: none;
+    cursor: pointer; font-size: 0.85rem; font-weight: 600;
+    text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
+    white-space: nowrap;
+  }
+  .btn-primary { background: #3182ce; color: #fff; }
+  .btn-primary:hover { background: #2b6cb0; }
+  .btn-green  { background: #38a169; color: #fff; }
+  .btn-green:hover  { background: #2f855a; }
+  .btn-orange { background: #dd6b20; color: #fff; }
+  .btn-orange:hover { background: #c05621; }
+  .btn-red    { background: #e53e3e; color: #fff; }
+  .btn-red:hover    { background: #c53030; }
+  .btn-gray   { background: #edf2f7; color: #4a5568; border: 1px solid #e2e8f0; }
+  .btn-gray:hover   { background: #e2e8f0; }
+  .btn-sm { padding: 5px 11px; font-size: 0.78rem; }
+  .btn-warn { background: #ed8936; color: #fff; }
+  .btn-warn:hover { background: #dd6b20; }
+
+  /* Table card */
+  .card {
+    background: #fff; border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08); overflow: hidden;
+  }
+  .card-header {
+    padding: 14px 20px; border-bottom: 1px solid #e2e8f0;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .card-title { font-weight: 700; font-size: 0.95rem; }
+  .record-count {
+    background: #ebf8ff; color: #2b6cb0;
+    font-size: 0.72rem; font-weight: 700;
+    padding: 3px 10px; border-radius: 100px;
+  }
+
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    padding: 11px 14px; text-align: left; font-size: 0.72rem;
+    color: #718096; text-transform: uppercase; letter-spacing: 0.05em;
+    border-bottom: 1px solid #e2e8f0; background: #f7fafc;
+  }
+  td { padding: 13px 14px; border-bottom: 1px solid #f0f4f8; font-size: 0.875rem; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #f7fafc; }
+
+  /* Badges */
+  .badge {
+    display: inline-block; padding: 3px 10px; border-radius: 100px;
+    font-size: 0.72rem; font-weight: 700;
+  }
+  .badge-ok       { background: #c6f6d5; color: #276749; }
+  .badge-low      { background: #feebc8; color: #c05621; }
+  .badge-out      { background: #fed7d7; color: #c53030; }
+  .badge-category { background: #e9d8fd; color: #553c9a; }
+
+  .sku { font-family: monospace; font-size: 0.8rem; color: #718096; background: #f7fafc; padding: 2px 7px; border-radius: 4px; }
+  .price { font-weight: 700; color: #276749; }
+  .qty  { font-weight: 700; font-size: 1rem; }
+
+  /* Quick action row */
+  .actions { display: flex; gap: 5px; flex-wrap: wrap; }
+
+  /* Inline restock/sell forms */
+  .qty-form { display: flex; gap: 5px; align-items: center; }
+  .qty-form input[type="number"] {
+    width: 60px; padding: 5px 8px; border: 1px solid #cbd5e0;
+    border-radius: 6px; font-size: 0.8rem;
+  }
+
+  .empty { text-align: center; padding: 48px; color: #a0aec0; }
+  .empty span { font-size: 2rem; display: block; margin-bottom: 8px; }
+
+  /* Modal */
+  .modal-bg {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.45); z-index: 100;
+    align-items: center; justify-content: center;
+  }
+  .modal-bg.open { display: flex; }
+  .modal {
+    background: #fff; border-radius: 12px; padding: 28px;
+    width: 360px; max-width: 95vw;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+  }
+  .modal h3 { font-size: 1rem; margin-bottom: 16px; }
+  .modal label { font-size: 0.78rem; font-weight: 600; color: #4a5568; display: block; margin-bottom: 5px; }
+  .modal input[type="number"], .modal input[type="text"] {
+    width: 100%; margin-bottom: 12px;
+    padding: 9px 12px; border: 1px solid #cbd5e0; border-radius: 7px; font-size: 0.875rem;
+  }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px; }
+</style>
+</head>
+<body>
+
+<div class="navbar">
+  <h1>📦 Inventory Management System</h1>
+</div>
+
+<div class="container">
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+    <div class="flash {{ cat }}">
+      {{ '✓' if cat == 'success' else '⚠' }} {{ msg }}
+    </div>
+    {% endfor %}
+  {% endwith %}
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat-card blue">
+      <div class="stat-num">{{ total_products }}</div>
+      <div class="stat-label">Total Products</div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-num">₹{{ "%.2f"|format(total_value) }}</div>
+      <div class="stat-label">Total Stock Value</div>
+    </div>
+    <div class="stat-card orange">
+      <div class="stat-num">{{ low_stock_count }}</div>
+      <div class="stat-label">Low Stock Alerts</div>
+    </div>
+    <div class="stat-card red">
+      <div class="stat-num">{{ out_of_stock }}</div>
+      <div class="stat-label">Out of Stock</div>
+    </div>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <form method="GET">
+      <input class="search-input" type="text" name="q" placeholder="🔍 Search name, SKU, supplier…" value="{{ search }}"/>
+      <select name="category">
+        <option value="">All Categories</option>
+        {% for c in categories %}
+        <option value="{{ c.category }}" {% if selected_category == c.category %}selected{% endif %}>{{ c.category }}</option>
+        {% endfor %}
+      </select>
+      <select name="stock">
+        <option value="">All Stock</option>
+        <option value="low" {% if stock_filter == 'low' %}selected{% endif %}>⚠ Low Stock</option>
+      </select>
+      <button class="btn btn-primary" type="submit">Filter</button>
+      {% if search or selected_category or stock_filter %}
+      <a href="/" class="btn btn-gray">✕ Clear</a>
+      {% endif %}
+    </form>
+    <a href="/add" class="btn btn-green">+ Add Product</a>
+  </div>
+
+  <!-- Table -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Products</span>
+      <span class="record-count">{{ products|length }} items</span>
+    </div>
+
+    {% if products %}
+    <div style="overflow-x:auto;">
+      <table>
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>SKU</th>
+            <th>Category</th>
+            <th>Stock</th>
+            <th>Unit Price</th>
+            <th>Stock Value</th>
+            <th>Supplier</th>
+            <th>Location</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in products %}
+          <tr>
+            <td style="font-weight:600">{{ p.name }}</td>
+            <td><span class="sku">{{ p.sku }}</span></td>
+            <td><span class="badge badge-category">{{ p.category }}</span></td>
+            <td>
+              {% if p.quantity == 0 %}
+                <span class="qty" style="color:#e53e3e">0</span>
+                <span class="badge badge-out" style="margin-left:4px">Out</span>
+              {% elif p.quantity <= p.low_stock_threshold %}
+                <span class="qty" style="color:#dd6b20">{{ p.quantity }}</span>
+                <span class="badge badge-low" style="margin-left:4px">Low</span>
+              {% else %}
+                <span class="qty" style="color:#276749">{{ p.quantity }}</span>
+                <span class="badge badge-ok" style="margin-left:4px">OK</span>
+              {% endif %}
+            </td>
+            <td class="price">₹{{ "%.2f"|format(p.unit_price) }}</td>
+            <td style="font-weight:600; color:#2d3748">₹{{ "%.2f"|format(p.quantity * p.unit_price) }}</td>
+            <td style="color:#718096; font-size:0.82rem">{{ p.supplier or '—' }}</td>
+            <td style="color:#718096; font-size:0.82rem">{{ p.location or '—' }}</td>
+            <td>
+              <div class="actions">
+                <button class="btn btn-green btn-sm" onclick="openRestock({{ p.id }}, '{{ p.name }}')">+ Stock</button>
+                <button class="btn btn-warn btn-sm" onclick="openSell({{ p.id }}, '{{ p.name }}', {{ p.quantity }})">- Sell</button>
+                <a href="/movements/{{ p.id }}" class="btn btn-gray btn-sm">Log</a>
+                <a href="/edit/{{ p.id }}" class="btn btn-primary btn-sm">Edit</a>
+                <form method="POST" action="/delete/{{ p.id }}" style="display:inline"
+                      onsubmit="return confirm('Delete {{ p.name }}?')">
+                  <button type="submit" class="btn btn-red btn-sm">Del</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty">
+      <span>📦</span>
+      No products found{% if search %} for "{{ search }}"{% endif %}.
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Restock Modal -->
+<div class="modal-bg" id="restockModal">
+  <div class="modal">
+    <h3>➕ Restock — <span id="restockName"></span></h3>
+    <form method="POST" id="restockForm">
+      <label>Quantity to Add</label>
+      <input type="number" name="qty" min="1" value="10" required/>
+      <label>Note</label>
+      <input type="text" name="note" value="Restock" placeholder="e.g. Purchase order #123"/>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-gray" onclick="closeModal('restockModal')">Cancel</button>
+        <button type="submit" class="btn btn-green">Add Stock</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Sell Modal -->
+<div class="modal-bg" id="sellModal">
+  <div class="modal">
+    <h3>🛒 Sell — <span id="sellName"></span></h3>
+    <p style="font-size:0.8rem; color:#718096; margin-bottom:12px">Available: <strong id="sellAvail"></strong> units</p>
+    <form method="POST" id="sellForm">
+      <label>Quantity to Sell</label>
+      <input type="number" name="qty" id="sellQty" min="1" value="1" required/>
+      <label>Note</label>
+      <input type="text" name="note" value="Sale" placeholder="e.g. Order #456"/>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-gray" onclick="closeModal('sellModal')">Cancel</button>
+        <button type="submit" class="btn btn-orange">Confirm Sale</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openRestock(id, name) {
+    document.getElementById('restockName').textContent = name;
+    document.getElementById('restockForm').action = `/restock/${id}`;
+    document.getElementById('restockModal').classList.add('open');
+  }
+  function openSell(id, name, avail) {
+    document.getElementById('sellName').textContent = name;
+    document.getElementById('sellAvail').textContent = avail;
+    document.getElementById('sellQty').max = avail;
+    document.getElementById('sellForm').action = `/sell/${id}`;
+    document.getElementById('sellModal').classList.add('open');
+  }
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
+  }
+  // Close on backdrop click
+  document.querySelectorAll('.modal-bg').forEach(m => {
+    m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+  });
+</script>
+
+</body>
+</html>
